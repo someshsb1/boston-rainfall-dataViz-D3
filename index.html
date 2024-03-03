@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boston Rainfall Visualization</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    .line {
+      fill: none;
+      stroke: rgb(32, 89, 135);
+      stroke-width: 2;
+    }
+
+    .grid {
+      fill: none;
+      stroke: rgb(168, 206, 237);
+      stroke-width: 0.1;
+    }
+
+    .tooltip {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 5px;
+      border-radius: 5px;
+      pointer-events: none;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <svg width="900" height="900">
+    <text class="chart-title" x="450" y="30" text-anchor="middle">Interactive Boston Rainfall Visualization - 2022</text>
+    <g id="chart" transform="translate(100, 50)"></g>
+  </svg>
+
+  <div class="tooltip"></div>
+
+  <script>
+    const data = [
+      { site: 'South End - Union Park St. Playground', rainfall: 12.36 },
+      { site: 'Roslindale - Roslindale Sq.', rainfall: 41.15 },
+      { site: 'Dorchester - Adams Village', rainfall: 13.19 },
+      { site: 'Allston - Union Sq.', rainfall: 32.58 },
+      { site: 'Hyde Park - Cleary Sq.', rainfall: 37.18 },
+      { site: 'Mattapan - Harambee Park', rainfall: 36.72 },
+      { site: 'Charlestown - Bunker Hill', rainfall: 11.16 },
+      { site: 'Fenway - Longwood Medical Area', rainfall: 11.68 },
+      { site: 'East Boston - Day Sq.', rainfall: 31.08 },
+      { site: 'Roxbury - Egleston Sq.', rainfall: 12.4 },
+    ];
+
+    const margin = { top: 150, right: 100, bottom: 100, left: 150 };
+    const width = 900 - margin.left - margin.right;
+    const height = 600 - margin.top - margin.bottom;
+
+    const svg = d3.select('svg');
+    const chart = svg.select('#chart')
+      .attr('width', width)
+      .attr('height', height);
+
+    const x = d3.scaleBand()
+      .range([0, width])
+      .padding(0.1);
+
+    const y = d3.scaleLinear()
+      .range([height, 0]);
+
+    x.domain(data.map(d => d.site));
+    y.domain([0, 50]);
+
+    svg.append("text")
+      .attr("class", "y-axis-title")
+      .attr("text-anchor", "middle")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -height / 2)
+      .attr("y", margin.left / 2 - 20)
+      .text("Measured in Inches");
+
+    const line = d3.line()
+      .x(d => x(d.site) + x.bandwidth() / 2)
+      .y(d => y(d.rainfall));
+    
+      //x - axis marking
+    chart.append('g')
+      .attr('class', 'axis-x')
+      .attr('transform', 'translate(0,' + height + ')')
+      .call(d3.axisBottom(x))
+      .selectAll('text')
+      .attr('transform', 'rotate(-45)')
+      .style('text-anchor', 'end');
+
+      //y axis marking
+    chart.append('g')
+      .attr('class', 'axis-y')
+      .call(d3.axisLeft(y).ticks(5));
+
+      //line
+    chart.append('path')
+      .datum(data)
+      .attr('class', 'line')
+      .attr('d', line);
+
+    //grid lines
+    chart.append('g')
+    .attr('class', 'grid')
+    .call(d3.axisLeft(y).tickSize(-width).tickFormat(''));
+
+    //interactive hover info
+    chart.selectAll('.dot')
+      .data(data)
+      .enter().append('circle')
+      .attr('class', 'dot')
+      .attr('cx', d => x(d.site) + x.bandwidth() / 2)
+      .attr('cy', d => y(d.rainfall))
+      .attr('r', 4)
+      .on('mouseover', (event, d) => {
+        d3.select('.tooltip')
+          .style('display', 'block')
+          .html(`<strong>${d.site}</strong><br>Rainfall: ${d.rainfall} inches`)
+          .style('left', event.pageX + 10 + 'px')
+          .style('top', event.pageY - 15 + 'px');
+      })
+      .on('mouseout', () => {
+        d3.select('.tooltip').style('display', 'none');
+      });
+  </script>
+</body>
+
+</html>
